@@ -11,7 +11,7 @@ import ColorPickerRing
 
 struct ContentWrapper: View {
     @State var viewModel = ViewModel.shared
-    
+
     var body: some View {
         Content(viewModel: $viewModel)
         #if os(macOS)
@@ -24,7 +24,8 @@ struct Content: View {
     @Binding var viewModel: ViewModel
     let elementSpacing = 8.0
     let groupSpacing = 9.0
-    
+    @State private var textInput = ""
+
     @ViewBuilder var common: some View {
         VStack(spacing: elementSpacing) {
             HStack {
@@ -74,7 +75,7 @@ struct Content: View {
             }
         }
     }
-    
+
     @ViewBuilder var fullscreenColor: some View {
         VStack(spacing: elementSpacing) {
             HStack {
@@ -112,7 +113,7 @@ struct Content: View {
                         }
         }
     }
-    
+
     @ViewBuilder var gifImage: some View {
         VStack(spacing: elementSpacing) {
             HStack {
@@ -149,7 +150,7 @@ struct Content: View {
                                 let outputData = pipe.fileHandleForReading.availableData
                                 await viewModel.sendGif(outputData)
 //                                let output2 = pipe.fileHandleForReading.readDataToEndOfFile()
-                                
+
                             } catch {
                                 print(error)
                             }
@@ -167,7 +168,7 @@ struct Content: View {
             }
         }
     }
-    
+
     @ViewBuilder var image: some View {
         VStack(spacing: elementSpacing) {
             HStack {
@@ -199,7 +200,7 @@ struct Content: View {
             }
         }
     }
-    
+
     @ViewBuilder var text: some View {
         VStack(spacing: elementSpacing) {
             HStack {
@@ -215,8 +216,30 @@ struct Content: View {
                     .frame(height: 40)
             }
             HStack {
-                Text("Work in progress")
+                TextField("Enter Text", text: $textInput)
+                    .textFieldStyle(.roundedBorder)
+                Button("Send") {
+                    viewModel.sendText(textInput)
+                }
             }
+            .padding(.horizontal)
+
+            ColorPickerRing(color: $viewModel.color, strokeWidth: 30)
+                .frame(width: 200, height: 200, alignment: .center)
+
+            CompactSlider(
+                 value: $viewModel.brightness,
+                 in: 5...100,
+                 step: 1
+             ) {
+                 Text("Brightness")
+                 Spacer()
+                 Text(String(format: "%.0f%%", viewModel.brightness))
+             }
+             .frame(height: 24)
+             .onChange(of: viewModel.brightness) {
+                 viewModel.setBrightness()
+             }
         }
     }
 
@@ -258,7 +281,7 @@ struct Content: View {
                 }
             }
     }
-    
+
     @ViewBuilder func lightEffectPicker(name: Int) -> some View {
         Image("\(name)effect")
             .resizable()
@@ -279,7 +302,7 @@ struct Content: View {
             }
             .cornerRadius(5)
     }
-    
+
     @ViewBuilder func addLightEffectColorButton() -> some View {
         Image(systemName: "plus.circle.fill")
             .resizable()
@@ -290,7 +313,7 @@ struct Content: View {
             }
             .cornerRadius(5)
     }
-    
+
     @ViewBuilder var lightEffect: some View {
         VStack(spacing: elementSpacing) {
             HStack {
@@ -319,7 +342,7 @@ struct Content: View {
             .onChange(of: viewModel.brightness) {
                 viewModel.setBrightness()
             }
-            
+
             HStack {
                 ForEach(Array(viewModel.lightEffectColor.enumerated()), id: \.offset) { index, color in
                     lightColor(index: index)
@@ -328,7 +351,7 @@ struct Content: View {
                     addLightEffectColorButton()
                 }
             }
-            
+
             ColorPickerRing(color: $viewModel.lightEffectColor[viewModel.lightEffectColorSelected], strokeWidth: 30)
                         .frame(width: 200, height: 200, alignment: .center)
                         .onChange(of: viewModel.lightEffectColor) {
@@ -350,7 +373,7 @@ struct Content: View {
             }
         }
     }
-    
+
     @ViewBuilder func imagePicker(name: Int) -> some View {
         Image("\(name)")
             .resizable()
@@ -371,7 +394,7 @@ struct Content: View {
             }
             .cornerRadius(5)
     }
-    
+
     @ViewBuilder var clock: some View {
         VStack(spacing: elementSpacing) {
             HStack {
@@ -433,7 +456,7 @@ struct Content: View {
             }
         }
     }
-    
+
     @ViewBuilder var chronograph: some View {
         VStack(spacing: elementSpacing) {
             HStack {
@@ -479,7 +502,7 @@ struct Content: View {
             }
         }
     }
-    
+
     @ViewBuilder var countdown: some View {
         VStack(spacing: elementSpacing) {
             HStack {
@@ -540,7 +563,7 @@ struct Content: View {
             }
         }
     }
-    
+
     @ViewBuilder var eco: some View {
         VStack(spacing: elementSpacing) {
             HStack {
@@ -575,7 +598,7 @@ struct Content: View {
             .frame(height: 24)
         }
     }
-    
+
     @ViewBuilder var musicIntegration: some View {
         VStack(spacing: elementSpacing) {
             HStack {
@@ -597,7 +620,7 @@ struct Content: View {
             }
         }
     }
-    
+
     @ViewBuilder func sampleButton(_ buttonType: ViewModel.possibleScreens, _ buttonText: String, _ imageText: String) -> some View {
         Button {
             viewModel.currentScreen = buttonType
@@ -625,14 +648,14 @@ struct Content: View {
 //        .frame(width: 90,height: 50, maxWidth: 90)
         .buttonStyle(.borderless)
     }
-    
+
     @ViewBuilder var ConnectedView: some View {
         VStack(spacing: groupSpacing) {
             HStack(spacing: 15) {
                 sampleButton(.clock, "Clock", "clock.fill")
                 sampleButton(.lightEffect, "Light Effect", "rainbow")
                 sampleButton(.fullscreenColor, "Screen Color", "display")
-                
+
             }
             HStack(spacing: 15) {
                 sampleButton(.stopwatch, "Stopwatch", "stopwatch.fill")
@@ -701,7 +724,7 @@ struct Content: View {
         }
         .background(.clear)
     }
-    
+
     var body: some View {
         VStack(spacing: groupSpacing) {
             switch viewModel.currentScreen {

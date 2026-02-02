@@ -21,10 +21,14 @@ struct ContentWrapper: View {
 }
 
 struct Content: View {
+    @Environment(\.openWindow) var openWindow
     @Binding var viewModel: ViewModel
     let elementSpacing = 8.0
     let groupSpacing = 9.0
+
     @State private var textInput = ""
+
+
 
     @ViewBuilder var common: some View {
         VStack(spacing: elementSpacing) {
@@ -667,6 +671,28 @@ struct Content: View {
                 sampleButton(.image, "Image", "photo.fill")
                 sampleButton(.eco, "Eco", "moon")
             }
+            HStack(spacing: 15) {
+                Button(action: {
+                    PixelArtWindowManager.shared.open()
+                }) {
+                    VStack(spacing: 5) {
+                        Image(systemName: "paintbrush.fill")
+                        Text("Pixel Art")
+                            .font(.system(size: 12, weight: .semibold))
+                            .fixedSize()
+                    }
+                    .foregroundStyle(.foreground)
+                    .frame(minWidth: 100, maxWidth: .infinity)
+                    .padding(.vertical, 16)
+                    .background(
+                        Rectangle()
+                            .fill(.ultraThinMaterial)
+                            .clipShape(.rect(cornerRadius: 10))
+                            .shadow(radius: 5)
+                    )
+                }
+                .buttonStyle(.borderless)
+            }
 //            Button("Screen Color") {
 //                viewModel.currentScreen = .fullscreenColor
 //            }
@@ -748,6 +774,8 @@ struct Content: View {
                     countdown
                 case .eco:
                     eco
+                case .pixelArt:
+                    EmptyView()
                 case .musicIntegration:
                     musicIntegration
                 case .home:
@@ -780,6 +808,7 @@ struct Content: View {
         }
         .padding(.horizontal, 30)
         .padding(10)
+
 //        .onReceive(DistributedNotificationCenter.default().publisher(for: Notification.Name("LyricFeverColorUpdate")), perform: { notification in
 //            print("RECEIVED NOTIFCIATION")
 //            if let jsonString = notification.object as? String,

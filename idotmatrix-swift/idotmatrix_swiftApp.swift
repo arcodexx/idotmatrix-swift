@@ -15,10 +15,10 @@ import FluidMenuBarExtra
 class AppDelegate: NSObject, NSApplicationDelegate {
     private var menuBarExtra: FluidMenuBarExtra?
     func applicationDidFinishLaunching(_ notification: Notification) {
-        
+
         self.menuBarExtra = FluidMenuBarExtra(title: "iDotMatrix Swift", systemImage: "photo.tv") {
             ContentWrapper()
-//                .onReceive(DistributedNotificationCenter.default().publisher(for: Notification.Name("LyricFeverColorUpdate"))) { notif in 
+//                .onReceive(DistributedNotificationCenter.default().publisher(for: Notification.Name("LyricFeverColorUpdate"))) { notif in
 //                    print("hi")
 //                }
         }
@@ -43,13 +43,18 @@ struct idotmatrix_swiftApp: App {
 //        }).menuBarExtraStyle(.window)
     }
     #endif
-    
+
     #if os(iOS)
-    
+
     var body: some Scene {
         WindowGroup {
             ContentWrapper()
         }
+
+        WindowGroup(id: "pixelArtEditor") {
+            PixelArtEditorView()
+        }
+        .windowResizability(.contentSize)
     }
     #endif
 }

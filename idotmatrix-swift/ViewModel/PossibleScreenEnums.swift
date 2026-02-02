@@ -20,11 +20,12 @@ extension ViewModel {
         case eco
         case musicIntegration
         case home
+        case pixelArt
     }
-    
+
     enum inImageModeEnum {
         case image
         case notImage
     }
-    
+
 }

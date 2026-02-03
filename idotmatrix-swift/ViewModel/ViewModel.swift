@@ -57,6 +57,26 @@ import ScriptingBridge
 
     // Music Integration
     var currentArtworkUrlString = ""
+    var currentSpotifyTask: Task<Void, Never>?
+    var isSpotifyEnabled: Bool = false {
+        didSet {
+            if isSpotifyEnabled {
+                updateSpotifyAlbumArt()
+            } else {
+                currentArtworkUrlString = ""
+            }
+        }
+    }
+
+    var showSongTitle: Bool = true {
+        didSet {
+            if isSpotifyEnabled {
+                // Force update by resetting the tracker
+                currentArtworkUrlString = ""
+                updateSpotifyAlbumArt()
+            }
+        }
+    }
 
     // Image
     var photoUrl: URL?

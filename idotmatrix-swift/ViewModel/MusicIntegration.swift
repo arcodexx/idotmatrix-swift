@@ -1,12 +1,10 @@
-//
-//  MusicIntegration.swift
-//  Dot Matrix
-//
-//  Created by Avi Wadhwa on 2024-12-01.
-//
 
 import Foundation
 import CoreImage
+#if os(macOS)
+import AppKit
+import ImageIO
+#endif
 
 extension ViewModel {
     @objc func handleColorUpdate(notification: Notification) {
@@ -28,100 +26,169 @@ extension ViewModel {
         }
     }
 
-    // Apply a color adjustment transformation to a CIImage
-//    func adjustColors(of image: CIImage) -> CIImage? {
-//        guard let cgImage = CIContext().createCGImage(image, from: image.extent) else {
-//            print("Failed to create CGImage.")
-//            return nil
-//        }
-//
-//        let width = Int(image.extent.width)
-//        let height = Int(image.extent.height)
-//
-//        let bytesPerPixel = 4
-//        let bytesPerRow = bytesPerPixel * width
-//        var pixelBuffer = [UInt8](repeating: 0, count: width * height * bytesPerPixel)
-//
-//        // Create bitmap context for pixel manipulation
-//        guard let context = CGContext(
-//            data: &pixelBuffer,
-//            width: width,
-//            height: height,
-//            bitsPerComponent: 8,
-//            bytesPerRow: bytesPerRow,
-//            space: cgImage.colorSpace ?? CGColorSpaceCreateDeviceRGB(),
-//            bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
-//        ) else {
-//            print("Failed to create CGContext.")
-//            return nil
-//        }
-//
-//        context.draw(cgImage, in: CGRect(x: 0, y: 0, width: width, height: height))
-//
-//        // Modify pixels
-//        for y in 0..<height {
-//            for x in 0..<width {
-//                let offset = (y * width + x) * bytesPerPixel
-//
-//                let r = Float(pixelBuffer[offset + 0]) / 255.0
-//                let g = Float(pixelBuffer[offset + 1]) / 255.0
-//                let b = Float(pixelBuffer[offset + 2]) / 255.0
-//
-//                // Apply the weighted transformation
-//                let newR = r * colorAdjustments["red"]!.red + g * colorAdjustments["green"]!.red + b * colorAdjustments["blue"]!.red
-//                let newG = r * colorAdjustments["red"]!.green + g * colorAdjustments["green"]!.green + b * colorAdjustments["blue"]!.green
-//                let newB = r * colorAdjustments["red"]!.blue + g * colorAdjustments["green"]!.blue + b * colorAdjustments["blue"]!.blue
-//
-//                // Clamp and update pixel values
-//                pixelBuffer[offset + 0] = UInt8(max(0, min(255, newR * 255.0)))
-//                pixelBuffer[offset + 1] = UInt8(max(0, min(255, newG * 255.0)))
-//                pixelBuffer[offset + 2] = UInt8(max(0, min(255, newB * 255.0)))
-//            }
-//        }
-//
-//        // Create a new CIImage from the modified pixel buffer
-//        guard let outputCGImage = context.makeImage() else {
-//            print("Failed to create output CGImage.")
-//            return nil
-//        }
-//
-//        return CIImage(cgImage: outputCGImage)
-//    }
-    
     @objc func handleSpotifyUpdate(notification: Notification) {
-        print("RECEIVED NOTIFICATION")
-        Task {
-            if let artworkUrlString = spotifyScript?.currentTrack?.artworkUrl {
-                print("current artwork url: \(currentArtworkUrlString) and new: \(artworkUrlString)")
-                if artworkUrlString != "" && currentArtworkUrlString != artworkUrlString {
-                    currentArtworkUrlString = artworkUrlString
-//                    if let albumArt = modelContext.model(for: .identifier(for: <#T##String#>, entityName: <#T##String#>, primaryKey: <#T##Comparable & CustomStringConvertible & Decodable & Encodable & Hashable#>)) as? AlbumArt {
-//                        print(sneakers.director)
-//                    }
-                    if let artworkUrl = URL(string: artworkUrlString), let data = try? await URLSession.shared.data(from: artworkUrl) {
-//                        let context = CIContext()
-//                        if let ciImage = CIImage(data: data.0), let adjusted = adjustColors(of: ciImage), let image = context.pngRepresentation(of: adjusted, format: .RGBAh, colorSpace: CGColorSpace(name: CGColorSpace.dcip3)!) {
-//                            await photoButtonClicked(data: image)
-//                        }
-                        
-                        let ciImage = CIImage(data: data.0)
+        #if os(macOS)
+        updateSpotifyAlbumArt()
+        #endif
+    }
+
+    func updateSpotifyAlbumArt() {
+        #if os(macOS)
+        if !isSpotifyEnabled { return }
+
+        // Cancel the previous task to prevent race conditions/corruption
+        currentSpotifyTask?.cancel()
+
+        currentSpotifyTask = Task {
+            // Check for cancellation at start
+            if Task.isCancelled { return }
+
+            guard let track = spotifyScript?.currentTrack,
+                  let artworkUrlString = track.artworkUrl,
+                  let trackID = track.id?(),
+                  let trackName = track.name else {
+                return
+            }
+
+            let uniqueId = trackID
+
+            if uniqueId != "" && currentArtworkUrlString != uniqueId {
+                currentArtworkUrlString = uniqueId
+
+                if let artworkUrl = URL(string: artworkUrlString), let data = try? await URLSession.shared.data(from: artworkUrl) {
+
+                    if Task.isCancelled { return }
+
+                    let ciImage = CIImage(data: data.0)
+
+                    // Generate GIF with scrolling text
+                    if showSongTitle, let gifData = generateMarqueeGif(from: ciImage, text: trackName) {
+                        if Task.isCancelled { return }
+                        await sendGif(gifData)
+                    } else {
+                        // Fallback to static image if GIF generation skipped or fails, OR if showSongTitle is false
                         let filter = CIFilter(name: "CIColorControls")!
-//                        let colorMatrixFilter = CIFilter.colorMatrix()
                         filter.setValue(ciImage, forKey: kCIInputImageKey)
                         filter.setValue(1.8, forKey: kCIInputSaturationKey)
-//                        filter.setValue(CIVector(x: 1.2, y: 0, z: 0, w: 0), forKey: "inputRVector") // Increase red
-//                            filter.setValue(CIVector(x: 0, y: 1.2, z: 0, w: 0), forKey: "inputGVector") // Increase green
-//                            filter.setValue(CIVector(x: 0, y: 0, z: 0.8, w: 0), forKey: "inputBVector") // Decrease blue
-//                            filter.setValue(CIVector(x: 0, y: 0, z: 0, w: 1), forKey: "inputAVector") // Preserve alpha
                         let context = CIContext()
-                        guard let outputImage = filter.outputImage, let image = context.pngRepresentation(of: outputImage, format: .RGBAh, colorSpace: CGColorSpace(name: CGColorSpace.dcip3)!) else { return  }
-//                        let albumArt = AlbumArt(id: artworkUrlString, albumArt: image)
-//                        modelContext.insert(albumArt)
+                        guard let outputImage = filter.outputImage, let image = context.pngRepresentation(of: outputImage, format: .RGBAh, colorSpace: CGColorSpace(name: CGColorSpace.dcip3)!) else { return }
+
+                        if Task.isCancelled { return }
                         await photoButtonClicked(data: image)
                     }
                 }
             }
         }
-        
+        #endif
     }
+
+    #if os(macOS)
+    func generateMarqueeGif(from inputImage: CIImage?, text: String) -> Data? {
+        guard let inputImage = inputImage else { return nil }
+        let width = 32
+        let height = 32
+
+        // Resize and adjust saturation
+        let filter = CIFilter(name: "CIColorControls")!
+        filter.setValue(inputImage, forKey: kCIInputImageKey)
+        filter.setValue(1.8, forKey: kCIInputSaturationKey)
+
+        guard let filteredImage = filter.outputImage else { return nil }
+        let context = CIContext()
+        // Create CGImage to draw
+        guard let cgImage = context.createCGImage(filteredImage, from: filteredImage.extent) else { return nil }
+
+        // Determine Text Color based on bottom area brightness
+        var textColor = NSColor.white
+
+        // Crop to bottom 10 pixels (approx area of text)
+        // Image origin in Core Image is bottom-left.
+        let bottomRect = CGRect(x: 0, y: 0, width: filteredImage.extent.width, height: filteredImage.extent.height * 0.3)
+        let vector = CIVector(x: bottomRect.origin.x, y: bottomRect.origin.y, z: bottomRect.size.width, w: bottomRect.size.height)
+
+        if let areaAverageFilter = CIFilter(name: "CIAreaAverage") {
+            areaAverageFilter.setValue(filteredImage, forKey: kCIInputImageKey)
+            areaAverageFilter.setValue(vector, forKey: kCIInputExtentKey)
+
+            if let outputImage = areaAverageFilter.outputImage {
+                var bitmap = [UInt8](repeating: 0, count: 4)
+                context.render(outputImage, toBitmap: &bitmap, rowBytes: 4, bounds: CGRect(x: 0, y: 0, width: 1, height: 1), format: .RGBA8, colorSpace: CGColorSpaceCreateDeviceRGB())
+
+                let r = CGFloat(bitmap[0]) / 255.0
+                let g = CGFloat(bitmap[1]) / 255.0
+                let b = CGFloat(bitmap[2]) / 255.0
+
+                // Calculate luminance
+                let luminance = 0.299 * r + 0.587 * g + 0.114 * b
+
+                if luminance > 0.6 { // Bright background
+                    textColor = NSColor.black
+                } else {
+                    textColor = NSColor.white
+                }
+            }
+        }
+
+        // Setup Bitmap Context
+        let colorSpace = CGColorSpace(name: CGColorSpace.sRGB)!
+        // Use noneSkipLast to ensure opaque alpha (RGBX), preventing transparency artifacts in simple GIF decoders
+        guard let bitmapContext = CGContext(data: nil, width: width, height: height, bitsPerComponent: 8, bytesPerRow: width * 4, space: colorSpace, bitmapInfo: CGImageAlphaInfo.noneSkipLast.rawValue) else { return nil }
+
+        bitmapContext.setShouldAntialias(false) // Disable AA for crisp text on low-res 32x32 display
+
+        // Text Attributes
+        let font = NSFont.boldSystemFont(ofSize: 10)
+
+        let attributes: [NSAttributedString.Key: Any] = [
+            .font: font,
+            .foregroundColor: textColor,
+        ]
+        let attributedText = NSAttributedString(string: text, attributes: attributes)
+        let textSize = attributedText.size()
+
+        // Calculate Frames
+        // Text starts at right edge (32) and scrolls to -textWidth
+        // Total distance = 32 + textWidth
+        let scrollStart = CGFloat(width)
+        let scrollEnd = -textSize.width
+        let distance = scrollStart - scrollEnd
+        let speed: CGFloat = 1.0 // Pixels per frame
+        let totalFrames = Int(distance / speed)
+
+        let data = NSMutableData()
+        guard let destination = CGImageDestinationCreateWithData(data as CFMutableData, kUTTypeGIF as CFString, totalFrames, nil) else { return nil }
+
+        let frameProperties = [kCGImagePropertyGIFDictionary: [kCGImagePropertyGIFDelayTime: 0.1]] // 0.1s delay = 10fps
+
+        for i in 0..<totalFrames {
+            // Clear
+            bitmapContext.clear(CGRect(x: 0, y: 0, width: width, height: height))
+
+            // Draw Background (resize to fill)
+            bitmapContext.draw(cgImage, in: CGRect(x: 0, y: 0, width: width, height: height))
+
+            // Draw Text at Bottom
+            let xPos = scrollStart - (CGFloat(i) * speed)
+            // Position at bottom. y=0 is bottom in standard Cartesian.
+            let yPos: CGFloat = 0 // Fully at bottom
+
+            NSGraphicsContext.saveGraphicsState()
+            let nsContext = NSGraphicsContext(cgContext: bitmapContext, flipped: false) // Flipped false means (0,0) is bottom-left.
+            NSGraphicsContext.current = nsContext
+
+            attributedText.draw(at: CGPoint(x: xPos, y: yPos))
+
+            NSGraphicsContext.restoreGraphicsState()
+
+            if let frameImage = bitmapContext.makeImage() {
+                CGImageDestinationAddImage(destination, frameImage, frameProperties as CFDictionary)
+            }
+        }
+
+        if CGImageDestinationFinalize(destination) {
+            return data as Data
+        }
+        return nil
+    }
+    #endif
 }

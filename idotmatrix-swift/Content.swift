@@ -617,7 +617,12 @@ struct Content: View {
                     .font(.system(size: 24))
                     .frame(height: 40)
             }
-            HStack {
+            VStack(alignment: .leading) {
+                Toggle("Enable Spotify Album Art", isOn: $viewModel.isSpotifyEnabled)
+                if viewModel.isSpotifyEnabled {
+                    Toggle("Show Song Title", isOn: $viewModel.showSongTitle)
+                        .padding(.leading)
+                }
                 Text("Clock color update from Lyric Fever")
                 Text("Pixelated album art from Spotify / Apple Music")
                 Text("Light Effects from Spotify / Apple Music colors")

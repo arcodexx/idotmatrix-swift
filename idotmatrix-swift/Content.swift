@@ -713,13 +713,35 @@ struct Content: View {
                     )
                 }
                 .buttonStyle(.borderless)
-
+            }
+            HStack(spacing: 15) {
                 Button(action: {
                     AssetsWindowManager.shared.open()
                 }) {
                      VStack(spacing: 5) {
                         Image(systemName: "folder.fill")
                         Text("My Assets")
+                            .font(.system(size: 12, weight: .semibold))
+                            .fixedSize()
+                    }
+                    .foregroundStyle(.foreground)
+                    .frame(minWidth: 100, maxWidth: .infinity)
+                    .padding(.vertical, 16)
+                    .background(
+                        Rectangle()
+                            .fill(.ultraThinMaterial)
+                            .clipShape(.rect(cornerRadius: 10))
+                            .shadow(radius: 5)
+                    )
+                }
+                .buttonStyle(.borderless)
+
+                Button(action: {
+                    viewModel.currentScreen = .scheduler
+                }) {
+                     VStack(spacing: 5) {
+                        Image(systemName: "calendar")
+                        Text("Scheduler")
                             .font(.system(size: 12, weight: .semibold))
                             .fixedSize()
                     }
@@ -796,6 +818,27 @@ struct Content: View {
     var body: some View {
         VStack(spacing: groupSpacing) {
             switch viewModel.currentScreen {
+                case .scheduler:
+                    // Embed SchedulerView directly
+                    // We need to wrap it to match other views or just use it
+                    // SchedulerView needs to be adapted to not use NavigationView?
+                    // User said "open in main app... then when user edit... open separate window"
+                    // So main list is here.
+                    VStack(spacing: elementSpacing) {
+                        HStack {
+                            Button(action: {
+                                viewModel.currentScreen = .home
+                            }, label: {
+                                Image(systemName: "chevron.backward")
+                            })
+                            Text("Scheduler")
+                                .bold()
+                            Image(systemName: "calendar")
+                                .font(.system(size: 24))
+                                .frame(height: 40)
+                        }
+                        SchedulerView()
+                    }
                 case .common:
                     common
                 case .fullscreenColor:

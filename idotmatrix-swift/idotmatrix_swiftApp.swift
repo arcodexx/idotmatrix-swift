@@ -30,11 +30,19 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
 @main
 struct idotmatrix_swiftApp: App {
+    init() {
+        ScheduleManager.shared.startScheduler()
+    }
+
     #if os(macOS)
     @NSApplicationDelegateAdaptor private var appDelegate: AppDelegate
 
     var body: some Scene {
         _EmptyScene()
+//        WindowGroup(id: "scheduler") {
+//            SchedulerView()
+//        }
+//        .windowResizability(.contentSize)
 //        MenuBarExtra(content: {
 //            Content(viewModel: $viewModel)
 //                .frame(width: 350, alignment: .top)
@@ -53,6 +61,11 @@ struct idotmatrix_swiftApp: App {
 
         WindowGroup(id: "pixelArtEditor") {
             PixelArtEditorView()
+        }
+        .windowResizability(.contentSize)
+
+        WindowGroup(id: "scheduler") {
+            SchedulerView()
         }
         .windowResizability(.contentSize)
     }

@@ -30,7 +30,7 @@ class AssetManager: ObservableObject {
 
     @Published var assets: [AssetModel] = []
 
-    private var assetsFolderURL: URL? {
+    var assetsFolderURL: URL? {
         guard let documents = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first else { return nil }
         return documents.appendingPathComponent(folderName)
     }

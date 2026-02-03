@@ -21,6 +21,7 @@ extension ViewModel {
         case musicIntegration
         case home
         case pixelArt
+        case scheduler
     }
 
     enum inImageModeEnum {

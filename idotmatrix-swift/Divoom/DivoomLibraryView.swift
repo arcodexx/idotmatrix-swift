@@ -14,7 +14,7 @@ struct DivoomLibraryView: View {
     @State private var files: [DivoomFile] = []
     @State private var isLoading = false
     @State private var currentPage = 1
-    @State private var errorMsg: String?
+    @State private var hasMorePages = true
 
     // Grid layout
     let columns = [
@@ -27,6 +27,7 @@ struct DivoomLibraryView: View {
             HStack {
                 Text("Divoom Library")
                     .bold()
+
                 Spacer()
 
                 if client.isLoggedIn {
@@ -136,19 +137,24 @@ struct DivoomLibraryView: View {
     func reloadGallery() {
         files = []
         currentPage = 1
+        hasMorePages = true
         loadMore()
     }
 
     func loadMore() {
-        guard !isLoading else { return }
+        guard !isLoading && hasMorePages else { return }
         isLoading = true
 
         Task {
             do {
                 let newFiles = try await client.fetchFiles(category: selectedCategory, page: currentPage)
                 await MainActor.run {
-                    files.append(contentsOf: newFiles)
-                    currentPage += 1
+                    if newFiles.isEmpty {
+                        hasMorePages = false
+                    } else {
+                        files.append(contentsOf: newFiles)
+                        currentPage += 1
+                    }
                     isLoading = false
                 }
             } catch {

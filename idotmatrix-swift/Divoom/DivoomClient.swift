@@ -176,18 +176,11 @@ class DivoomClient: ObservableObject {
             "EndNum": endNum,
             "Classify": category.rawValue,
             "FileSize": 15, // ALL dimensions
-            "FileType": 0, // 0=Picture? apixoo logic seems complex here but 5=ALL is used in example.
-            // Re-checking apixoo const.py: GalleryType.ALL = 5.
-            // Let's stick to what apixoo example used or defaults.
-            // Example: dimension=GalleryDimension.W64H64 (4), file_type=GalleryType.ALL (5)
-            // But let's verify what we want. We generally want Animations or Pictures or Multi-Animation.
-            // Let's use 5 (ALL) for FileType.
+            "FileType": 0,
             "FileSort": 1, // Most Liked
             "Version": 12,
             "RefreshIndex": 0
         ]
-
-        // Note: authenticated request typically needs Token/UserID injected
 
         let response: DivoomGalleryResponse = try await postRequest(endpoint: endpoint, payload: payload, authenticated: true)
         return response.fileList

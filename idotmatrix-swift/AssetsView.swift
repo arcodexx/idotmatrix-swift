@@ -41,6 +41,7 @@ struct AssetItemView: View {
     let asset: AssetModel
     @ObservedObject var viewModel: ViewModel
     @State private var hover = false
+    @State private var showingDeleteAlert = false
 
     var body: some View {
         VStack {
@@ -81,7 +82,7 @@ struct AssetItemView: View {
                             .controlSize(.small)
 
                             Button("Delete") {
-                                AssetManager.shared.delete(asset)
+                                showingDeleteAlert = true
                             }
                             .buttonStyle(.bordered)
                             .tint(.red)
@@ -109,6 +110,14 @@ struct AssetItemView: View {
                 .lineLimit(1)
         }
         .frame(minWidth: 0, maxWidth: .infinity)
+        .alert("Delete Asset", isPresented: $showingDeleteAlert) {
+            Button("Delete", role: .destructive) {
+                AssetManager.shared.delete(asset)
+            }
+            Button("Cancel", role: .cancel) { }
+        } message: {
+            Text("Are you sure you want to delete '\(asset.name)'? This action cannot be undone.")
+        }
     }
 
     func sendAsset() {

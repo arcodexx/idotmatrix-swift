@@ -14,6 +14,7 @@ struct DivoomLibraryView: View {
     @State private var files: [DivoomFile] = []
     @State private var isLoading = false
     @State private var currentPage = 1
+    @State private var errorMsg: String?
     @State private var hasMorePages = true
 
     // Grid layout

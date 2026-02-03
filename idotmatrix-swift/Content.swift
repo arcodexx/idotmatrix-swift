@@ -692,6 +692,48 @@ struct Content: View {
                     )
                 }
                 .buttonStyle(.borderless)
+
+                Button(action: {
+                    DivoomWindowManager.shared.open()
+                }) {
+                     VStack(spacing: 5) {
+                        Image(systemName: "cloud.fill")
+                        Text("Divoom Library")
+                            .font(.system(size: 12, weight: .semibold))
+                            .fixedSize()
+                    }
+                    .foregroundStyle(.foreground)
+                    .frame(minWidth: 100, maxWidth: .infinity)
+                    .padding(.vertical, 16)
+                    .background(
+                        Rectangle()
+                            .fill(.ultraThinMaterial)
+                            .clipShape(.rect(cornerRadius: 10))
+                            .shadow(radius: 5)
+                    )
+                }
+                .buttonStyle(.borderless)
+
+                Button(action: {
+                    AssetsWindowManager.shared.open()
+                }) {
+                     VStack(spacing: 5) {
+                        Image(systemName: "folder.fill")
+                        Text("My Assets")
+                            .font(.system(size: 12, weight: .semibold))
+                            .fixedSize()
+                    }
+                    .foregroundStyle(.foreground)
+                    .frame(minWidth: 100, maxWidth: .infinity)
+                    .padding(.vertical, 16)
+                    .background(
+                        Rectangle()
+                            .fill(.ultraThinMaterial)
+                            .clipShape(.rect(cornerRadius: 10))
+                            .shadow(radius: 5)
+                    )
+                }
+                .buttonStyle(.borderless)
             }
 //            Button("Screen Color") {
 //                viewModel.currentScreen = .fullscreenColor

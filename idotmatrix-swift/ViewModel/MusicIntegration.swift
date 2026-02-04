@@ -43,6 +43,16 @@ extension ViewModel {
             // Check for cancellation at start
             if Task.isCancelled { return }
 
+            // Handle Pause State
+            if let playerState = spotifyScript?.playerState, playerState == .paused, switchToClockOnPause {
+                print("Spotify paused, switching to clock")
+                currentArtworkUrlString = "" // Reset tracker so resume triggers update
+                await MainActor.run {
+                    self.setClock()
+                }
+                return
+            }
+
             guard let track = spotifyScript?.currentTrack,
                   let artworkUrlString = track.artworkUrl,
                   let trackID = track.id?(),
@@ -64,7 +74,18 @@ extension ViewModel {
                     // Generate GIF with scrolling text
                     if showSongTitle, let gifData = generateMarqueeGif(from: ciImage, text: trackName) {
                         if Task.isCancelled { return }
-                        await sendGif(gifData)
+
+                        // Clear buffer with blank GIF to prevent artifacts
+                        // Use 0 delay for blank gif for instant flush
+                        if let blankGif = getBlankGif() {
+                             await sendGif(blankGif, delay: 0)
+                             // Minimal delay to ensure device processes the clear
+                             try? await Task.sleep(nanoseconds: 100_000_000) // 0.1s
+                        }
+
+                        if Task.isCancelled { return }
+                        // Use 0.03s delay for balance of speed and reliability
+                        await sendGif(gifData, delay: 30_000_000)
                     } else {
                         // Fallback to static image if GIF generation skipped or fails, OR if showSongTitle is false
                         let filter = CIFilter(name: "CIColorControls")!
@@ -186,6 +207,38 @@ extension ViewModel {
         }
 
         if CGImageDestinationFinalize(destination) {
+            return data as Data
+        }
+        return nil
+    }
+
+    // Cache the blank GIF to avoid regenerating it every time
+    private static var _blankGifData: Data?
+
+    func getBlankGif() -> Data? {
+        if let data = Self._blankGifData {
+            return data
+        }
+
+        let width = 32
+        let height = 32
+        let colorSpace = CGColorSpace(name: CGColorSpace.sRGB)!
+        guard let bitmapContext = CGContext(data: nil, width: width, height: height, bitsPerComponent: 8, bytesPerRow: width * 4, space: colorSpace, bitmapInfo: CGImageAlphaInfo.noneSkipLast.rawValue) else { return nil }
+
+        bitmapContext.setFillColor(NSColor.black.cgColor)
+        bitmapContext.fill(CGRect(x: 0, y: 0, width: width, height: height))
+
+        // 1 Frame
+        let data = NSMutableData()
+        guard let destination = CGImageDestinationCreateWithData(data as CFMutableData, kUTTypeGIF as CFString, 1, nil) else { return nil }
+        let frameProperties = [kCGImagePropertyGIFDictionary: [kCGImagePropertyGIFDelayTime: 0.1]]
+
+        if let frameImage = bitmapContext.makeImage() {
+             CGImageDestinationAddImage(destination, frameImage, frameProperties as CFDictionary)
+        }
+
+        if CGImageDestinationFinalize(destination) {
+            Self._blankGifData = data as Data
             return data as Data
         }
         return nil

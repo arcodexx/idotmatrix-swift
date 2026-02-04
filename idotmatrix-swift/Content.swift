@@ -622,6 +622,8 @@ struct Content: View {
                 if viewModel.isSpotifyEnabled {
                     Toggle("Show Song Title", isOn: $viewModel.showSongTitle)
                         .padding(.leading)
+                    Toggle("Switch to clock on pause", isOn: $viewModel.switchToClockOnPause)
+                        .padding(.leading)
                 }
                 Text("Clock color update from Lyric Fever")
                 Text("Pixelated album art from Spotify / Apple Music")

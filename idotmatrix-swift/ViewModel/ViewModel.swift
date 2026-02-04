@@ -78,6 +78,15 @@ import ScriptingBridge
         }
     }
 
+    var switchToClockOnPause: Bool = false {
+        didSet {
+            if isSpotifyEnabled {
+                // Update to check current state immediately
+                updateSpotifyAlbumArt()
+            }
+        }
+    }
+
     // Image
     var photoUrl: URL?
 
@@ -110,7 +119,17 @@ import ScriptingBridge
 
     // Clock
     var visibleDate = false
-    var hour24 = true
+    var hour24: Bool {
+        get {
+            access(keyPath: \.hour24)
+            return UserDefaults.standard.object(forKey: "hour24") as? Bool ?? true
+        }
+        set {
+            withMutation(keyPath: \.hour24) {
+                UserDefaults.standard.setValue(newValue, forKey: "hour24")
+            }
+        }
+    }
     var clockStyle: Int {
         get {
             access(keyPath: \.clockStyle)

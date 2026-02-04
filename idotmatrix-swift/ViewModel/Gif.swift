@@ -32,14 +32,14 @@ extension ViewModel {
         return nil
     }
 
-    func sendGif(_ gifData: Data) async {
+    func sendGif(_ gifData: Data, delay: UInt64 = 50_000_000) async {
         currentlyDisplayingImage = .notImage
         var chunks: [Data] = []
 
         // Initial header based on Python example - create ONCE
         let headerTemplate = Data([255, 255, 1, 0, 0, 255, 255, 255, 255, 255, 255, 255, 255, 5, 0, 13])
-        let hexString = headerTemplate.map { String(format: "%02x", $0) }.joined(separator: "")
-        print(hexString)
+//        let hexString = headerTemplate.map { String(format: "%02x", $0) }.joined(separator: "")
+//        print(hexString)
         // Split GIF data into chunks first, just like Python
         let gifChunks = stride(from: 0, to: gifData.count, by: 4096).map {
             gifData.subdata(in: $0..<min($0 + 4096, gifData.count))
@@ -72,11 +72,13 @@ extension ViewModel {
 
         for chunk in chunks {
             sendData(data: chunk)
-            do {
-                try await Task.sleep(nanoseconds: 50_000_000)
-            } catch {
-                print("GIF sending cancelled")
-                return
+            if delay > 0 {
+                do {
+                    try await Task.sleep(nanoseconds: delay)
+                } catch {
+                    print("GIF sending cancelled")
+                    return
+                }
             }
         }
     }

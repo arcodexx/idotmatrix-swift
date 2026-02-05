@@ -79,13 +79,13 @@ extension ViewModel {
                         // Use 0 delay for blank gif for instant flush
                         if let blankGif = getBlankGif() {
                              await sendGif(blankGif, delay: 0)
-                             // Minimal delay to ensure device processes the clear
-                             try? await Task.sleep(nanoseconds: 100_000_000) // 0.1s
+                             // Robust delay to ensure device processes the clear
+                             try? await Task.sleep(nanoseconds: 250_000_000) // 0.25s
                         }
 
                         if Task.isCancelled { return }
-                        // Use 0.03s delay for balance of speed and reliability
-                        await sendGif(gifData, delay: 30_000_000)
+                        // Use 0.04s delay for reliability (0.03s was borderline)
+                        await sendGif(gifData, delay: 40_000_000)
                     } else {
                         // Fallback to static image if GIF generation skipped or fails, OR if showSongTitle is false
                         let filter = CIFilter(name: "CIColorControls")!
